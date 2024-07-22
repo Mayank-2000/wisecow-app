@@ -1,0 +1,55 @@
+import os
+import shutil
+import datetime
+import argparse
+import subprocess
+
+def create_backup(source_dir, backup_dir):
+  """
+  Creates a backup of the source directory to the backup directory.
+  """
+  try:
+    # Create backup directory if it doesn't exist
+    os.makedirs(backup_dir, exist_ok=True)
+
+    # Get current timestamp for backup file name
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    backup_file = os.path.join(backup_dir, f"backup_{timestamp}.tar.gz")
+
+    # Create tar archive of the source directory
+    shutil.make_archive(backup_file[:-7], "gztar", source_dir)
+
+    print(f"Backup created successfully: {backup_file}")
+    return True
+  except Exception as e:
+    print(f"Error during backup: {e}")
+    return False
+
+def send_backup(backup_file, destination):
+  """
+  Sends the backup file to the specified destination using scp.
+  """
+  try:
+    # Use subprocess to execute scp command
+    subprocess.run(
+      ["scp", backup_file, destination],
+      check=True,
+    )
+    print(f"Backup sent to {destination}")
+    return True
+  except Exception as e:
+    print(f"Error sending backup: {e}")
+    return False
+
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description="Automated backup script.")
+  parser.add_argument("source_dir", help="Source directory to backup")
+  parser.add_argument("backup_dir", help="Directory to store the backup")
+  parser.add_argument("--destination", help="Remote destination for backup", default=None)
+
+  args = parser.parse_args()
+
+  if create_backup(args.source_dir, args.backup_dir):
+    if args.destination:
+      backup_file = os.path.join(args.backup_dir, f"backup_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.tar.gz")
+      send_backup(backup_file, args.destination)
