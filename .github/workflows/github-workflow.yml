@@ -1,0 +1,20 @@
+name: CI/CD for Wisecow
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker Image
+      run: docker build -t wisecow:latest .
+    - name: Push the Docker Image
+      run: docker push wisecow:latest
+    - name: Deploy to Kubernetes
+      uses: azure/k8s-deploy@v1
+      with:
+        kubernetes_config: ./.github/workflows/k8s-config.yaml
+        image_name: kubemayank/wisecow:latest
+        manifest: ./deployment.yaml
